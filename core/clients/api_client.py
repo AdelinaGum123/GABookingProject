@@ -32,19 +32,19 @@ class APIClient:
         else:
             raise ValueError(f"Unsupported environment: {environment}")
 
-    def get(self, endpoint, params=None, status_code=200):
-        url = self.base_url + endpoint
-        response = requests.get(url, headers=self.headers, params=params)
-        if status_code:
-            assert response.status_code == status_code
-        return response.json()
-
-    def post(self, endpoint, data=None, status_code=200):
-        url = self.base_url + endpoint
-        response = requests.post(url, headers=self.headers, json=data)
-        if status_code:
-            assert response.status_code == status_code
-        return response.json()
+    # def get(self, endpoint, params=None, status_code=200):
+    #     url = self.base_url + endpoint
+    #     response = requests.get(url, headers=self.session.headers, params=params)
+    #     if status_code:
+    #         assert response.status_code == status_code
+    #     return response.json()
+    #
+    # def post(self, endpoint, data=None, status_code=200):
+    #     url = self.base_url + endpoint
+    #     response = requests.post(url, headers=self.session.headers, json=data)
+    #     if status_code:
+    #         assert response.status_code == status_code
+    #     return response.json()
 
     def ping(self):
         with allure.step('Ping api client'):
@@ -67,5 +67,12 @@ class APIClient:
         with allure.step('Updating header with authorization'):
             self.session.headers.update({"Authorization": f"Bearer {token}"})
 
+    def get_booking_by_id(self, booking_id: int):
 
-
+        with allure.step(f'Get booking by id {booking_id}'):
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
+            response = self.session.get(url, timeout=Timeouts.TIMEOUT)
+            response.raise_for_status()
+        with allure.step('Check status code is 200'):
+            assert response.status_code == 200, f"Expected status 200 but got {response.status_code}"
+        return response.json()
