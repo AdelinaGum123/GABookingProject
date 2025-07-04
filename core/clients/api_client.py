@@ -10,7 +10,7 @@ from core.clients.endpoints import Endpoints
 from core.settings.config import Users, Timeouts
 
 
-
+load_dotenv()
 class APIClient:
     def __init__(self):
         environment_str = os.getenv('ENVIRONMENT')
