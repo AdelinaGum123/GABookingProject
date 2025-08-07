@@ -39,41 +39,69 @@ def test_creating_booking_booking_with_custom_data(api_client):
 
 
 @allure.feature('Create booking')
-@allure.story('Negative: non existent month')
-def test_non_existent_month(api_client, booking_dates):
-    year = booking_dates["checkin"][:4]
+@allure.story('Negative: creating booking without firstname fails')
+def test_create_booking_without_firstname_returns_500(api_client):
     booking_data = {
-        "checkin": f"{year}-13-01",  # не существующий месяц
-        "checkout": f"{year}-02-01"
+        "lastname": "Brown",
+        "totalprice": 111,
+        "depositpaid": True,
+        "bookingdates": {
+            "checkin": "2024-01-01",
+            "checkout": "2024-01-05"
+        },
+        "additionalneeds": "Breakfast"
     }
 
-    with pytest.raises(ValidationError) as e:
-        BookingDates(**booking_data)
-    assert "month value is outside expected range of 1-12" in str(e.value)
+    response = api_client.create_booking(booking_data, expected_status_code=500)
+    assert "Internal Server Error" in str(response)
+
+
+@allure.feature("Create booking")
+@allure.story("Negative: creating booking with firstname=None returns 500")
+def test_create_booking_with_firstname_none_returns_500(api_client):
+    booking_data = {
+        "firstname": None,
+        "lastname": "Brown",
+        "totalprice": 111,
+        "depositpaid": True,
+        "bookingdates": {
+            "checkin": "2024-01-01",
+            "checkout": "2024-01-05"
+        },
+        "additionalneeds": "Breakfast"
+    }
+    response = api_client.create_booking(booking_data, expected_status_code=500)
+    assert "Internal Server Error" in str(response)
+
+
+@allure.feature("Create booking")
+@allure.story("Negative: creating booking with firstname=None returns 500")
+def test_create_booking_with_firstname_none_returns_500(api_client):
+    booking_data = {}
+    response = api_client.create_booking(booking_data, expected_status_code=500)
+    assert "Internal Server Error" in str(response)
 
 
 @allure.feature('Create booking')
-@allure.story('Negative: invalid leap year date')
-def test_invalid_leap_year_date(api_client):
-    booking_data = {
-        "checkin": "2025-02-29", # не существующий день в не високосном году 
-        "checkout": "2025-03-01"
-    }
+@allure.story('Negative: invalid data types')
+def test_create_booking_with_invalid_data_types_returns_500(api_client):
+    invalid_cases = [
+        {"firstname": 12345},
+        {"bookingdates": "2025-01-01,2025-01-05"}
+    ]
 
-    with pytest.raises(ValidationError) as e:
-        BookingDates(**booking_data)
-    assert "day value is outside expected range" in str(e.value)
+    for case in invalid_cases:
+        booking_data = {
+            "firstname": "Valid",
+            "lastname": "Data",
+            "totalprice": 100,
+            "depositpaid": True,
+            "bookingdates": {
+                "checkin": "2025-01-01",
+                "checkout": "2025-01-05"
+            }
+        }
+        booking_data.update(case)
 
-
-@allure.feature('Create booking')
-@allure.story('Negative: invalid day in april')
-def test_invalid_day_in_april(api_client, booking_dates):
-    year = booking_dates["checkin"][:4]
-    booking_data = {
-        "checkin": f"{year}-04-31",  # не существующий день в апреле
-        "checkout": f"{year}-05-15"
-    }
-
-    with pytest.raises(ValidationError) as e:
-        BookingDates(**booking_data)
-    assert "day value is outside expected range" in str(e.value)
+        response = api_client.create_booking(booking_data, expected_status_code=500)
+        assert "Internal Server Error" in str(response)
