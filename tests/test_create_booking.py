@@ -2,6 +2,7 @@ from http.client import responses
 
 import allure
 import pytest
+import requests
 
 from core.models.booking import BookingDates
 from pydantic import ValidationError
@@ -52,40 +53,27 @@ def test_create_booking_without_firstname_returns_500(api_client):
         "additionalneeds": "Breakfast"
     }
 
-    response = api_client.create_booking(booking_data, expected_status_code=500)
-    assert "Internal Server Error" in str(response)
+    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+        api_client.create_booking(booking_data)
+
+    assert exc_info.value.response.status_code == 500
 
 
 @allure.feature("Create booking")
-@allure.story("Negative: creating booking with firstname=None returns 500")
-def test_create_booking_with_firstname_none_returns_500(api_client):
-    booking_data = {
-        "firstname": None,
-        "lastname": "Brown",
-        "totalprice": 111,
-        "depositpaid": True,
-        "bookingdates": {
-            "checkin": "2024-01-01",
-            "checkout": "2024-01-05"
-        },
-        "additionalneeds": "Breakfast"
-    }
-    response = api_client.create_booking(booking_data, expected_status_code=500)
-    assert "Internal Server Error" in str(response)
-
-
-@allure.feature("Create booking")
-@allure.story("Negative: creating booking with firstname=None returns 500")
-def test_create_booking_with_firstname_none_returns_500(api_client):
+@allure.story("Negative: creating booking without booking_data")
+def test_create_booking_without_booking_data(api_client):
     booking_data = {}
-    response = api_client.create_booking(booking_data, expected_status_code=500)
-    assert "Internal Server Error" in str(response)
+    with pytest.raises(requests.exceptions.HTTPError) as e:
+        api_client.create_booking(booking_data)
+
+    assert e.value.response.status_code == 500
 
 
 @allure.feature('Create booking')
 @allure.story('Negative: invalid data types')
 def test_create_booking_with_invalid_data_types_returns_500(api_client):
     invalid_cases = [
+        {"firstname": None},
         {"firstname": 12345},
         {"bookingdates": "2025-01-01,2025-01-05"}
     ]
@@ -103,5 +91,7 @@ def test_create_booking_with_invalid_data_types_returns_500(api_client):
         }
         booking_data.update(case)
 
-        response = api_client.create_booking(booking_data, expected_status_code=500)
-        assert "Internal Server Error" in str(response)
+        with pytest.raises(requests.exceptions.HTTPError) as e:
+            api_client.create_booking(booking_data)
+
+        assert e.value.response.status_code == 500
