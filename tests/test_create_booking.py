@@ -71,26 +71,29 @@ def test_create_booking_without_booking_data(api_client):
 
 @allure.feature('Create booking')
 @allure.story('Negative: invalid data types')
-def test_create_booking_with_invalid_data_types_returns_500(api_client):
-    invalid_cases = [
-        {"firstname": None},
-        {"firstname": 12345},
-        {"bookingdates": "2025-01-01,2025-01-05"}
-    ]
-
-    for case in invalid_cases:
-        booking_data = {
-            "firstname": "Valid",
-            "lastname": "Data",
-            "totalprice": 100,
-            "depositpaid": True,
-            "bookingdates": {
-                "checkin": "2025-01-01",
-                "checkout": "2025-01-05"
-            }
+@pytest.mark.parametrize("invalid_data", [
+    {"firstname": None},
+    {"firstname": 1234},
+    {"bookingdates": "2025-01-01,2025-01-05"}
+], ids=[
+    "None as firstname",
+    "Integer as firstname",
+    "String as bookingdates"
+])
+def test_create_booking_with_invalid_data_types(api_client, invalid_data):
+    booking_data = {
+        "firstname": "Valid",
+        "lastname": "Data",
+        "totalprice": 100,
+        "depositpaid": True,
+        "bookingdates": {
+            "checkin": "2025-01-01",
+            "checkout": "2025-01-05"
         }
-        booking_data.update(case)
+    }
+    booking_data.update(invalid_data)
 
+    with allure.step(f"Try to create booking with invalid data: {invalid_data}"):
         with pytest.raises(requests.exceptions.HTTPError) as e:
             api_client.create_booking(booking_data)
 
