@@ -21,9 +21,7 @@ class APIClient:
 
         self.base_url = self.get_base_url(environment)
         self.session = requests.session()
-        self.session.headers = {
-            'Content_Type': 'application/json'
-        }
+
 
     def get_base_url(self, environment: Environment) -> str:
         if environment.value == Environment.TEST.value:
@@ -80,7 +78,7 @@ class APIClient:
             response.raise_for_status()
         with allure.step('Checking status code'):
             assert response.status_code == 200, f"Expected status code 201 but got {response.status_code}"
-        return response.status_code == 200
+        return response.json()
 
     def get_booking_ids(self, params=None):
         with allure.step('Getting object with booking'):
